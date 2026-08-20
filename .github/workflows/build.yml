@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -23,27 +23,35 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Set up Gradle 9.2.1
+      - name: Set up Gradle 9.1.0
         uses: gradle/actions/setup-gradle@v5
         with:
-          gradle-version: '9.2.1'
+          gradle-version: '9.1.0'
+
+      - name: Show tool versions
+        run: |
+          java -version
+          gradle --version
 
       - name: Build mod
-        run: gradle clean build --no-daemon --stacktrace
+        run: gradle clean build --no-daemon --stacktrace --refresh-dependencies
 
       - name: Verify JAR output
         shell: bash
         run: |
           echo "Build output:"
           ls -lah build/libs/
-          test -n "$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' -print -quit)"
+          jar_file="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print -quit)"
+          if [ -z "$jar_file" ]; then
+            echo "ERROR: No production JAR was produced."
+            exit 1
+          fi
+          echo "Production JAR: $jar_file"
 
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
           name: AutoSell-${{ github.sha }}
-          path: |
-            build/libs/*.jar
-            !build/libs/*-sources.jar
+          path: build/libs/*.jar
           if-no-files-found: error
           retention-days: 30
