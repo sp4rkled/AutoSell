@@ -38,7 +38,7 @@ final class PriceScreen extends Screen {
         );
         priceField.setMaxLength(12);
         priceField.setTextPredicate(value -> value.isEmpty() || value.chars().allMatch(Character::isDigit));
-        priceField.setText("1000");
+        priceField.setText("");
         priceField.setPlaceholder(Text.literal("Enter price"));
         priceField.setFocused(true);
         this.addDrawableChild(priceField);
@@ -82,7 +82,7 @@ final class PriceScreen extends Screen {
         this.renderBackground(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(
                 this.textRenderer,
-                Text.literal("Enter the /sell price"),
+                Text.literal("Enter the /ah sell price"),
                 this.width / 2,
                 this.height / 2 - 42,
                 0xFFFFFF
