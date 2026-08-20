@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
@@ -20,10 +21,10 @@ public final class AutoSellClient implements ClientModInitializer {
     private static final int PEARL_INTERVAL_TICKS = 20;
     private static final int FIRST_HOTBAR_SCREEN_SLOT = 36;
 
-    private static boolean enabled = false;
-    private static int price = 0;
-    private static int sellTicks = 0;
-    private static int pearlTicks = 0;
+    private static boolean enabled;
+    private static int price;
+    private static int sellTicks;
+    private static int pearlTicks;
 
     private static KeyBinding toggleKey;
 
@@ -63,18 +64,16 @@ public final class AutoSellClient implements ClientModInitializer {
         });
     }
 
-    private static void registerCommands(CommandDispatcher<net.minecraft.command.CommandSource> dispatcher) {
+    private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher) {
         dispatcher.register(ClientCommandManager.literal("autoenablenow")
                 .executes(context -> {
-                    MinecraftClient client = MinecraftClient.getInstance();
-                    client.execute(() -> openPricePrompt(client));
+                    openPricePrompt(MinecraftClient.getInstance());
                     return 1;
                 }));
 
         dispatcher.register(ClientCommandManager.literal("autodisablenow")
                 .executes(context -> {
-                    MinecraftClient client = MinecraftClient.getInstance();
-                    disable(client, true);
+                    disable(MinecraftClient.getInstance(), true);
                     return 1;
                 }));
     }
@@ -86,6 +85,7 @@ public final class AutoSellClient implements ClientModInitializer {
             }
             return;
         }
+
         client.setScreen(new PriceScreen(client, AutoSellClient::enableWithPrice));
     }
 
@@ -141,8 +141,8 @@ public final class AutoSellClient implements ClientModInitializer {
             return;
         }
 
-        // PlayerScreenHandler uses slots 9-35 for the main inventory and 36-44 for hotbar.
-        // A SWAP click on a source slot exchanges it with hotbar button 0 (the first slot).
+        // PlayerScreenHandler: main inventory is 9-35, hotbar is 36-44.
+        // SWAP with button 0 exchanges the source with hotbar slot 1.
         int screenSlot = inventoryIndexToScreenSlot(sourceInventoryIndex);
         if (screenSlot < 0) {
             return;
@@ -158,12 +158,14 @@ public final class AutoSellClient implements ClientModInitializer {
     }
 
     private static int findPearl(MinecraftClient client) {
+        // Prefer the main inventory so the other hotbar slots remain untouched when possible.
         for (int i = 9; i < 36; i++) {
             if (client.player.getInventory().getStack(i).isOf(Items.ENDER_PEARL)) {
                 return i;
             }
         }
 
+        // If there is no pearl in the main inventory, use another hotbar slot.
         for (int i = 1; i < 9; i++) {
             if (client.player.getInventory().getStack(i).isOf(Items.ENDER_PEARL)) {
                 return i;
