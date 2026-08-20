@@ -23,16 +23,23 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Set up Gradle
+      - name: Set up Gradle 9.2.1
         uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: '9.2.1'
 
       - name: Build mod
-        run: gradle build --no-daemon
+        run: gradle clean build --no-daemon --stacktrace
 
-      - name: Upload JAR
-        uses: actions/upload-artifact@v6
+      - name: Verify JAR output
+        shell: bash
+        run: |
+          echo "Build output:"
+          ls -lah build/libs/
+          test -n "$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' -print -quit)"
+
+      - name: Upload mod JAR
+        uses: actions/upload-artifact@v4
         with:
           name: AutoSell-${{ github.sha }}
           path: |
