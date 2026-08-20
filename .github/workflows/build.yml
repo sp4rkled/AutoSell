@@ -35,6 +35,8 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: AutoSell-${{ github.sha }}
-          path: build/libs/*[!-sources].jar
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
           if-no-files-found: error
           retention-days: 30
