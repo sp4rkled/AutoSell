@@ -60,7 +60,7 @@ public final class AutoSellClient implements ClientModInitializer {
 
             if (++sellTicks >= SELL_INTERVAL_TICKS) {
                 sellTicks = 0;
-                client.getNetworkHandler().sendChatCommand("sell " + price);
+                client.getNetworkHandler().sendChatCommand("ah sell " + price);
             }
 
             if (++pearlTicks >= PEARL_INTERVAL_TICKS) {
@@ -108,7 +108,7 @@ public final class AutoSellClient implements ClientModInitializer {
             pearlTicks = PEARL_INTERVAL_TICKS - 1;
 
             if (client.player != null) {
-                client.player.sendMessage(Text.literal("AutoSell enabled: /sell " + price), false);
+                client.player.sendMessage(Text.literal("AutoSell enabled: /ah sell " + price), false);
             }
         } catch (NumberFormatException ignored) {
             if (client.player != null) {
