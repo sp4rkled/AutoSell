@@ -81,7 +81,9 @@ public final class AutoSellClient implements ClientModInitializer {
 
     private static void openPricePrompt(MinecraftClient client) {
         if (enabled) {
-            client.player.sendMessage(Text.literal("AutoSell is already running."), false);
+            if (client.player != null) {
+                client.player.sendMessage(Text.literal("AutoSell is already running."), false);
+            }
             return;
         }
         client.setScreen(new PriceScreen(client, AutoSellClient::enableWithPrice));
@@ -107,6 +109,10 @@ public final class AutoSellClient implements ClientModInitializer {
                 client.player.sendMessage(Text.literal("Invalid price. Enter a whole number such as 1000."), false);
             }
         }
+    }
+
+    static boolean isEnabled() {
+        return enabled;
     }
 
     private static void disable(MinecraftClient client, boolean notify) {
@@ -136,7 +142,7 @@ public final class AutoSellClient implements ClientModInitializer {
         }
 
         // PlayerScreenHandler uses slots 9-35 for the main inventory and 36-44 for hotbar.
-        // A SWAP click on a source slot exchanges it with the hotbar button (0 = first slot).
+        // A SWAP click on a source slot exchanges it with hotbar button 0 (the first slot).
         int screenSlot = inventoryIndexToScreenSlot(sourceInventoryIndex);
         if (screenSlot < 0) {
             return;
@@ -152,14 +158,12 @@ public final class AutoSellClient implements ClientModInitializer {
     }
 
     private static int findPearl(MinecraftClient client) {
-        // Prefer the main inventory first so the hotbar is not unnecessarily rearranged.
         for (int i = 9; i < 36; i++) {
             if (client.player.getInventory().getStack(i).isOf(Items.ENDER_PEARL)) {
                 return i;
             }
         }
 
-        // Then search the other eight hotbar slots.
         for (int i = 1; i < 9; i++) {
             if (client.player.getInventory().getStack(i).isOf(Items.ENDER_PEARL)) {
                 return i;
