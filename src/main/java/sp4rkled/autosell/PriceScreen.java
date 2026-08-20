@@ -36,6 +36,7 @@ final class PriceScreen extends Screen {
                 Text.literal("Price")
         );
         priceField.setMaxLength(12);
+        priceField.setTextPredicate(value -> value.isEmpty() || value.chars().allMatch(Character::isDigit));
         priceField.setText("1000");
         priceField.setPlaceholder(Text.literal("Enter price"));
         priceField.setFocused(true);
