@@ -12,14 +12,20 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public final class AutoSellClient implements ClientModInitializer {
     private static final int SELL_INTERVAL_TICKS = 20;
     private static final int PEARL_INTERVAL_TICKS = 20;
     private static final int FIRST_HOTBAR_SCREEN_SLOT = 36;
+
+    private static final KeyBinding.Category KEY_CATEGORY = KeyBinding.Category.create(
+            Identifier.of("autosell", "autosell")
+    );
 
     private static boolean enabled;
     private static int price;
@@ -34,7 +40,7 @@ public final class AutoSellClient implements ClientModInitializer {
                 "key.autosell.toggle",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_UNKNOWN,
-                "category.autosell"
+                KEY_CATEGORY
         ));
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerCommands(dispatcher));
@@ -131,6 +137,12 @@ public final class AutoSellClient implements ClientModInitializer {
             return;
         }
 
+        // Fixed slot numbers below are valid only for the player's own inventory handler.
+        // Do not send a SWAP while a chest, shop, crafting table, etc. is open.
+        if (!(client.player.currentScreenHandler instanceof PlayerScreenHandler)) {
+            return;
+        }
+
         ItemStack firstHotbar = client.player.getInventory().getStack(0);
         if (firstHotbar.isOf(Items.ENDER_PEARL)) {
             return;
@@ -141,8 +153,6 @@ public final class AutoSellClient implements ClientModInitializer {
             return;
         }
 
-        // PlayerScreenHandler: main inventory is 9-35, hotbar is 36-44.
-        // SWAP with button 0 exchanges the source with hotbar slot 1.
         int screenSlot = inventoryIndexToScreenSlot(sourceInventoryIndex);
         if (screenSlot < 0) {
             return;
@@ -158,14 +168,12 @@ public final class AutoSellClient implements ClientModInitializer {
     }
 
     private static int findPearl(MinecraftClient client) {
-        // Prefer the main inventory so the other hotbar slots remain untouched when possible.
         for (int i = 9; i < 36; i++) {
             if (client.player.getInventory().getStack(i).isOf(Items.ENDER_PEARL)) {
                 return i;
             }
         }
 
-        // If there is no pearl in the main inventory, use another hotbar slot.
         for (int i = 1; i < 9; i++) {
             if (client.player.getInventory().getStack(i).isOf(Items.ENDER_PEARL)) {
                 return i;
