@@ -11,8 +11,7 @@ import java.util.function.BiConsumer;
 
 /**
  * Invisible price input screen.
- * The old AutoSell behaviour was intentionally keyboard-only: run the command,
- * type the price, then press Enter. Keep the input focused without drawing a popup.
+ * Type the price directly and press Enter; no popup is rendered.
  */
 final class PriceScreen extends Screen {
     private final MinecraftClient client;
@@ -29,7 +28,8 @@ final class PriceScreen extends Screen {
     protected void init() {
         super.init();
 
-        // Keep the field off-screen so Minecraft does not show a visible popup.
+        // The field is tiny and off-screen. It captures keyboard input without
+        // drawing a visible GUI over the game.
         priceField = new TextFieldWidget(
                 this.textRenderer,
                 -1000,
@@ -37,7 +37,17 @@ final class PriceScreen extends Screen {
                 1,
                 1,
                 Text.literal("Price")
-        );
+        ) {
+            @Override
+            public boolean keyPressed(KeyInput input) {
+                if (input.isEnter()) {
+                    submit();
+                    return true;
+                }
+                return super.keyPressed(input);
+            }
+        };
+
         priceField.setMaxLength(12);
         priceField.setTextPredicate(value -> value.isEmpty()
                 || value.chars().allMatch(Character::isDigit));
@@ -61,10 +71,6 @@ final class PriceScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyInput input) {
-        if (input.isEnter()) {
-            submit();
-            return true;
-        }
         if (input.isEscape()) {
             client.setScreen(null);
             return true;
@@ -79,7 +85,7 @@ final class PriceScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Intentionally draw nothing. This restores the original keyboard-only UX.
+        // Intentionally draw nothing: keyboard-only UX.
     }
 
     @Override
