@@ -55,25 +55,20 @@ final class PriceScreen extends Screen {
         if (value.isEmpty()) {
             return;
         }
+
         onSubmit.accept(client, value);
-        if (AutoSellClientIsEnabled()) {
+        if (AutoSellClient.isEnabled()) {
             close();
         }
     }
 
-    private boolean AutoSellClientIsEnabled() {
-        // The callback enables AutoSell only after validating the value.
-        // If validation fails, leave the input screen open so it can be corrected.
-        return true;
-    }
-
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 257 || keyCode == 335) { // Enter / Numpad Enter
+        if (keyCode == 257 || keyCode == 335) {
             submit();
             return true;
         }
-        if (keyCode == 256) { // Escape
+        if (keyCode == 256) {
             close();
             return true;
         }
